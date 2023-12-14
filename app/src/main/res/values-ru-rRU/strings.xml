@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GEORUN</string>
+    <string name="loc_permission_request">Приложению необходимо отслеживать местоположение устройства. Разрешить доступ к геолокации? В случае отказа, продолжение работы приложения будет невозможным...</string>
+</resources>

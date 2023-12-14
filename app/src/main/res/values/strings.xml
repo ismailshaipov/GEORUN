@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">GEORUN</string>
+    <string name="loc_permission_request">The application needs to track the location of the device. Allow access to geolocation? In case of failure, the application will not be able to continue working...</string>
+</resources>
