@@ -73,7 +73,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
         }
     }
 
-    fun deleteTrackSession(sessionId: Int) {
+    fun deleteTrackSession(sessionId: Long) {
         with(writableDatabase) {
             beginTransaction()
             delete("tracks", "_id = ?", arrayOf(sessionId.toString()))
@@ -96,7 +96,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
                 null
             ).let {
                 while (it.moveToNext()) {
-                    val sessionId = it.getInt(it.getColumnIndexOrThrow("_id"))
+                    val sessionId = it.getLong(it.getColumnIndexOrThrow("_id"))
                     val startTime = Instant.parse(it.getString(it.getColumnIndexOrThrow("start_time")))
                         .atZone(ZoneId.systemDefault())
                         .toLocalDateTime()
@@ -111,21 +111,51 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
         return sessions
     }
 
-    fun getCoordinatesForSession(sessionId: Int): List<Coordinates> {
+
+    fun getCoordinatesForSession(trackSessionId: Long): List<Coordinates> {
         val coordinates = mutableListOf<Coordinates>()
+
         val db = readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM coordinates WHERE track_id = ?", arrayOf(sessionId.toString()))
+        val cursor = db.rawQuery("SELECT * FROM coordinates WHERE track_id = ?", arrayOf(trackSessionId.toString()))
+
         with(cursor) {
             while (moveToNext()) {
                 val latitude = getDouble(getColumnIndexOrThrow("latitude"))
                 val longitude = getDouble(getColumnIndexOrThrow("longitude"))
-                val timestamp = Instant.parse(getString(getColumnIndexOrThrow(("timestamp"))))
+                val timestamp = Instant.parse(getString(getColumnIndexOrThrow("timestamp")))
                     .atZone(ZoneId.systemDefault())
                     .toLocalDateTime()
-                coordinates.add(Coordinates(sessionId, latitude, longitude, timestamp))
+                coordinates.add(Coordinates(trackSessionId, latitude, longitude, timestamp))
+            }
+            close()
+        }
+
+        return coordinates
+    }
+
+    fun insertTrackSessionAndGetId(trackSession: TrackSession): Long {
+        with(writableDatabase) {
+            beginTransaction()
+            val values = ContentValues(2)
+            values.put("start_time", trackSession.startTime.toString())
+            values.put("end_time", trackSession.endTime.toString())
+            val id = insert("tracks", null, values)
+            setTransactionSuccessful()
+            endTransaction()
+            return id
+        }
+    }
+
+    fun getLastTrackSessionId(): Long? {
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT MAX(_id) AS last_id FROM tracks", null)
+        return cursor.use {
+            if (it.moveToNext()) {
+                it.getLong(it.getColumnIndexOrThrow("last_id"))
+            } else {
+                null
             }
         }
-        return coordinates
     }
 
 }
