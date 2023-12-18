@@ -2,6 +2,8 @@ package com.example.georun
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -38,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.georun.database.DBHelper
 import com.example.georun.database.TrackSession
@@ -76,7 +79,8 @@ class MainActivity : ComponentActivity() {
             GEORUNTheme {
                 MainUI(
                     mvm,
-                    Modifier.fillMaxSize()
+                    Modifier.fillMaxSize(),
+                    this@MainActivity
                 )
                 mvm.showRequestDialog =
                     !mvm.isPermissionsGranted(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, context = this)
@@ -99,8 +103,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-
 }
 
 
@@ -108,13 +110,13 @@ class MainActivity : ComponentActivity() {
 fun MainUI(
     mvm: MainViewModel,
     modifier: Modifier = Modifier,
+    context: Context
 ){
     val loc by mvm.location.collectAsState()
-    val locStr = loc?.let { "Lat: ${it.latitude} Lon: ${it.longitude}" } ?: stringResource(id = R.string.UnknownLocation)
+    val locStr = loc?.let { stringResource(id = R.string.lat) + it.latitude + "  " + stringResource(id = R.string.lon) + it.longitude} ?: stringResource(id = R.string.UnknownLocation)
 
     val sessions by mvm.sessions.collectAsState()
-    //val sessions by remember {mvm.sessions}
-    //val sessions: List<TrackSession> = mvm.sessions
+
     Column(
         modifier = modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -123,7 +125,7 @@ fun MainUI(
             text = locStr,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.headlineSmall
+            style = MaterialTheme.typography.bodyLarge
         )
 
         Button(
@@ -145,16 +147,29 @@ fun MainUI(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(sessions) { session ->
-                SessionItem(session, onDeleteClick = { sessionId ->
+                SessionItem(session,
+                    onDeleteClick = { sessionId ->
                     mvm.deleteSession(sessionId)
-                })
+                    },
+                    onSessionClick = { sessionId ->
+                    startMapActivity( context,sessionId)
+                    }
+                )
             }
         }
     }
 }
 
+fun startMapActivity(context: Context, sessionId: Long) {
+    val navigate = Intent(context,MapActivity::class.java).apply {
+        putExtra("sessionID",sessionId)
+    }
+    startActivity(context,navigate,null)
+}
+
+
 @Composable
-fun SessionItem(session: TrackSession, onDeleteClick: (Long) -> Unit) {
+fun SessionItem(session: TrackSession, onDeleteClick: (Long) -> Unit,  onSessionClick: (Long) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -191,6 +206,15 @@ fun SessionItem(session: TrackSession, onDeleteClick: (Long) -> Unit) {
             ) {
                 Text(stringResource(id = R.string.DeleteSession))
             }
+
+            Button(
+                onClick = { onSessionClick(session.sessionId) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+            ) {
+                Text(stringResource(id = R.string.ViewOnMap))
+            }
         }
     }
 }
@@ -212,7 +236,9 @@ fun SessionItemPreview() {
                 endTime = LocalDateTime.now().plusHours(1),
                 distance = "200 м"
             ),
-            onDeleteClick = {}
+            onDeleteClick = {},
+            onSessionClick = {}
+
         )
     }
 }
@@ -266,3 +292,4 @@ fun LocationRequestDialogPreview(){
 
     }
 }
+

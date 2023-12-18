@@ -36,7 +36,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val sessions: StateFlow<List<TrackSession>> get()  = _sessions
 
     var showRequestDialog: Boolean by mutableStateOf(true)
-    var updJob: Job? = null
+    private var updJob: Job? = null
 
     private val fusedLocationClient = LocationServices
         .getFusedLocationProviderClient(app.applicationContext)
@@ -57,15 +57,17 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 Manifest.permission.ACCESS_COARSE_LOCATION, context = getApplication<Application>().applicationContext)) {
             val sessionId = databaseRepository.startNewSession()
             activeSessionId = sessionId
-            fusedLocationClient.lastLocation.addOnCompleteListener {
+            fusedLocationClient.lastLocation.addOnCompleteListener {firstLoc ->
                 viewModelScope.launch {
-                    _location.emit(it.result)
+                    _location.emit(firstLoc.result)
                     fusedLocationClient.requestLocationUpdates(
                         locationRequest,
                         locationCallback,
                         Looper.getMainLooper()
                     )
                 }
+                val firstL = firstLoc.result
+                databaseRepository.addCoordinatesToSession(sessionId, firstL)
             }
 
             updJob = viewModelScope.launch {

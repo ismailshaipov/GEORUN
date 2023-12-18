@@ -16,7 +16,7 @@ object Locator {
     val locationRequest by lazy {
         LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
-            5500
+            5000
         ).build()
     }
 

@@ -11,4 +11,8 @@
     <string name="No">Нет</string>
     <string name="StartTracking">Начать сессию</string>
     <string name="StopTracking">Завершить сессию</string>
+    <string name="ViewOnMap">Показать на карте</string>
+    <string name="lat">"Широта: "</string>
+    <string name="lon">"Долгота: "</string>
+    <string name="map">Пройденный маршрут</string>
 </resources>

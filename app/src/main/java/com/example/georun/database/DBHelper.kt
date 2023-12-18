@@ -53,7 +53,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
     fun insertTrackSessionAndGetId(startTime: LocalDateTime): Long {
         with(writableDatabase) {
             beginTransaction()
-            val values = ContentValues(3)
+            val values = ContentValues(1)
             values.put("start_time", startTime.toString())
             val id = insert("tracks", null, values)
             setTransactionSuccessful()
@@ -151,8 +151,8 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
             query(
                 "coordinates",
                 arrayOf("_id","track_id", "latitude","longitude","timestamp"),
-                null,
-                null,
+                "track_id = ?",
+                arrayOf(trackSessionId.toString()),
                 null,
                 null,
                 null

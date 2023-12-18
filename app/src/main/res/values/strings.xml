@@ -11,5 +11,9 @@
     <string name="No">No</string>
     <string name="StartTracking">Start Tracking</string>
     <string name="StopTracking">Stop Tracking</string>
-    <string name="title_activity_map">MapActivity</string>
+    <string name="title_activity_map" translatable="false">MapActivity</string>
+    <string name="ViewOnMap">View on map</string>
+    <string name="lat">"Latitude: "</string>
+    <string name="lon">Longitude:</string>
+    <string name="map">Map</string>
 </resources>
