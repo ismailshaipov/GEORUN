@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -42,6 +44,7 @@ import com.example.georun.database.TrackSession
 import com.example.georun.ui.theme.GEORUNTheme
 import com.example.georun.viewmodels.MainViewModel
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 class MainActivity : ComponentActivity() {
@@ -94,20 +97,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            mvm.loadTrackSessionsWithCoordinates()
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (mvm.requestLocationUpdates) mvm.startLocationUpdates()
-    }
 
-    override fun onPause() {
-        super.onPause()
-        mvm.stopLocationUpdates()
-    }
 }
+
 
 @Composable
 fun MainUI(
@@ -115,11 +110,11 @@ fun MainUI(
     modifier: Modifier = Modifier,
 ){
     val loc by mvm.location.collectAsState()
-    val locStr = loc?.let{ "Lat: ${it.latitude} Lon: ${it.longitude}" } ?: "Unknown location"
+    val locStr = loc?.let { "Lat: ${it.latitude} Lon: ${it.longitude}" } ?: stringResource(id = R.string.UnknownLocation)
 
-    val session: List<TrackSession> = mvm.trackSessions
-    //val session by remember { mvm.trackSessions}
-
+    val sessions by mvm.sessions.collectAsState()
+    //val sessions by remember {mvm.sessions}
+    //val sessions: List<TrackSession> = mvm.sessions
     Column(
         modifier = modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -135,7 +130,6 @@ fun MainUI(
             onClick = {
                 if (mvm.requestLocationUpdates) {
                     mvm.startLocationUpdates()
-
                 } else {
                     mvm.stopLocationUpdates()
                 }
@@ -143,23 +137,24 @@ fun MainUI(
             },
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Text(if (mvm.requestLocationUpdates) "Start Tracking" else "Stop Tracking")
+            Text(if (mvm.requestLocationUpdates) stringResource(id = R.string.StartTracking) else stringResource(id = R.string.StopTracking))
         }
 
-        /*LazyColumn(
+        LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(session){session ->
-                SessionItem(session)
+            items(sessions) { session ->
+                SessionItem(session, onDeleteClick = { sessionId ->
+                    mvm.deleteSession(sessionId)
+                })
             }
-        }*/
+        }
     }
 }
 
-
 @Composable
-fun SessionItem(session: TrackSession) {
+fun SessionItem(session: TrackSession, onDeleteClick: (Long) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -172,28 +167,39 @@ fun SessionItem(session: TrackSession) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Session ID: ${session.sessionId}",
+                text = stringResource(id = R.string.SessionID) + session.sessionId,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold
             )
-            /*Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Start Time: ${session.startTime}",
+                text = stringResource(id = R.string.StartTime) + getFormattedDateTime(session.startTime),
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
-                text = "End Time: ${session.endTime}",
+                text = stringResource(id = R.string.EndTime) + getFormattedDateTime(session.endTime),
                 style = MaterialTheme.typography.bodyMedium
-            )*/
+            )
+            Text(
+                text = stringResource(id = R.string.Distance) + session.distance,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Button(
+                onClick = { onDeleteClick(session.sessionId) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+            ) {
+                Text(stringResource(id = R.string.DeleteSession))
+            }
         }
     }
 }
 
-/*@Composable
-fun formatDateTime(dateTime: LocalDateTime): String {
-    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm", Locale.getDefault())
-    return formatter.format(dateTime)
-}*/
+@Composable
+fun getFormattedDateTime(dateTime: LocalDateTime): String {
+    val formatter = DateTimeFormatter.ofPattern("HH:mm:ss dd-MM-yyyy")
+    return dateTime.format(formatter)
+}
 
 @Preview
 @Composable
@@ -203,8 +209,10 @@ fun SessionItemPreview() {
             TrackSession(
                 sessionId = 1,
                 startTime = LocalDateTime.now(),
-                endTime = LocalDateTime.now().plusHours(1)
-            )
+                endTime = LocalDateTime.now().plusHours(1),
+                distance = "200 м"
+            ),
+            onDeleteClick = {}
         )
     }
 }
@@ -240,10 +248,10 @@ fun LocationRequestDialog(
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
                     Button(onClick = { onDeny() }) {
-                        Text("No")
+                        Text(stringResource(id = R.string.No))
                     }
                     Button(onClick = { onAllow() }) {
-                        Text("Yes")
+                        Text(stringResource(id = R.string.Yes))
                     }
                 }
             }

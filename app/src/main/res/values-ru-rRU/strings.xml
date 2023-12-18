@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">GEORUN</string>
     <string name="loc_permission_request">Приложению необходимо отслеживать местоположение устройства. Разрешить доступ к геолокации? В случае отказа, продолжение работы приложения будет невозможным...</string>
+    <string name="SessionID">"ID сессии: "</string>
+    <string name="StartTime">"Начало сессии: "</string>
+    <string name="EndTime">"Конец сессии: "</string>
+    <string name="Distance">"Дистанция: "</string>
+    <string name="DeleteSession">Удалить сессию</string>
+    <string name="UnknownLocation">Локация неизвестна</string>
+    <string name="Yes">Да</string>
+    <string name="No">Нет</string>
+    <string name="StartTracking">Начать сессию</string>
+    <string name="StopTracking">Завершить сессию</string>
 </resources>

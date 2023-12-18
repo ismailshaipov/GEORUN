@@ -5,8 +5,10 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import java.time.Instant
+import android.util.Log
+import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class DBHelper(context: Context) : SQLiteOpenHelper(
     context,
@@ -21,7 +23,8 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
                 "CREATE TABLE tracks (" +
                         "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
                         "start_time  DATE," +
-                        "end_time  DATE" +
+                        "end_time  DATE," +
+                        "distance TEXT"+
                         ")"
             )
 
@@ -47,27 +50,26 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
     }
 
     @SuppressLint("SuspiciousIndentation")
-    fun insertTrackSession(trackSession: TrackSession) {
+    fun insertTrackSessionAndGetId(startTime: LocalDateTime): Long {
         with(writableDatabase) {
             beginTransaction()
-            val values = ContentValues(2)
-                values.put("start_time", trackSession.startTime.toString())
-                values.put("end_time", trackSession.endTime.toString())
-            insert("tracks", null, values)
+            val values = ContentValues(3)
+            values.put("start_time", startTime.toString())
+            val id = insert("tracks", null, values)
             setTransactionSuccessful()
             endTransaction()
+            return id
         }
     }
 
-    fun insertCoordinates(coordinates: Coordinates) {
+    @SuppressLint("SuspiciousIndentation")
+    fun updateTrackSessionEndTime(sessionId: Long, endTime: LocalDateTime, distance: String) {
         with(writableDatabase) {
             beginTransaction()
-            val values = ContentValues(4)
-            values.put("track_id", coordinates.trackId)
-            values.put("latitude", coordinates.latitude)
-            values.put("longitude", coordinates.longitude)
-            values.put("timestamp", coordinates.timestamp.toString())
-            insert("coordinates", null, values)
+            val values = ContentValues(2)
+                values.put("end_time", endTime.toString())
+                values.put("distance", distance)
+            update("tracks", values, "_id = ?", arrayOf(sessionId.toString()))
             setTransactionSuccessful()
             endTransaction()
         }
@@ -82,13 +84,26 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
             endTransaction()
         }
     }
+    fun insertCoordinates(coordinates: Coordinates) {
+        with(writableDatabase) {
+            beginTransaction()
+            val values = ContentValues(4)
+            values.put("track_id", coordinates.trackId)
+            values.put("latitude", coordinates.latitude)
+            values.put("longitude", coordinates.longitude)
+            values.put("timestamp", coordinates.timestamp.toString())
+            insert("coordinates", null, values)
+            setTransactionSuccessful()
+            endTransaction()
+        }
+    }
 
     fun getTrackSessions(): List<TrackSession> {
         val sessions = mutableListOf<TrackSession>()
         with(readableDatabase) {
             query(
                 "tracks",
-                arrayOf("_id","start_time", "end_time"),
+                arrayOf("_id","start_time", "end_time","distance"),
                 null,
                 null,
                 null,
@@ -97,17 +112,34 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
             ).let {
                 while (it.moveToNext()) {
                     val sessionId = it.getLong(it.getColumnIndexOrThrow("_id"))
-                    val startTime = Instant.parse(it.getString(it.getColumnIndexOrThrow("start_time")))
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime()
-                    val endTime = Instant.parse(it.getString(it.getColumnIndexOrThrow("end_time")))
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime()
-                    sessions.add(TrackSession(sessionId, startTime, endTime))
+                    val startTimeString = it.getString(it.getColumnIndexOrThrow("start_time"))
+                    val endTimeString = it.getString(it.getColumnIndexOrThrow("end_time"))
+
+                    // Проверка на null перед парсингом
+                    if (startTimeString != null && endTimeString != null) {
+                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+
+                        val zone = ZoneId.systemDefault()
+
+                        val startTime = LocalDateTime.parse(startTimeString, formatter)
+                            .atZone(zone)
+                            .toLocalDateTime()
+
+                        val endTime = LocalDateTime.parse(endTimeString, formatter)
+                            .atZone(zone)
+                            .toLocalDateTime()
+
+                        val distance = it.getString(it.getColumnIndexOrThrow("distance"))
+                        sessions.add(TrackSession(sessionId, startTime, endTime, distance))
+                    } else {
+                        Log.d("MyTag", "NullSes")
+                    }
                 }
                 it.close()
             }
+
         }
+
         return sessions
     }
 
@@ -115,47 +147,28 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
     fun getCoordinatesForSession(trackSessionId: Long): List<Coordinates> {
         val coordinates = mutableListOf<Coordinates>()
 
-        val db = readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM coordinates WHERE track_id = ?", arrayOf(trackSessionId.toString()))
-
-        with(cursor) {
-            while (moveToNext()) {
-                val latitude = getDouble(getColumnIndexOrThrow("latitude"))
-                val longitude = getDouble(getColumnIndexOrThrow("longitude"))
-                val timestamp = Instant.parse(getString(getColumnIndexOrThrow("timestamp")))
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDateTime()
+        with(readableDatabase) {
+            query(
+                "coordinates",
+                arrayOf("_id","track_id", "latitude","longitude","timestamp"),
+                null,
+                null,
+                null,
+                null,
+                null
+            ).let {
+                while (it.moveToNext()) {
+                val latitude = it.getDouble(it.getColumnIndexOrThrow("latitude"))
+                val longitude = it.getDouble(it.getColumnIndexOrThrow("longitude"))
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+                val starttimestamp = it.getString(it.getColumnIndexOrThrow("timestamp"))
+                val timestamp = LocalDateTime.parse(starttimestamp, formatter)
                 coordinates.add(Coordinates(trackSessionId, latitude, longitude, timestamp))
             }
-            close()
+            it.close()
+            }
         }
 
         return coordinates
     }
-
-    fun insertTrackSessionAndGetId(trackSession: TrackSession): Long {
-        with(writableDatabase) {
-            beginTransaction()
-            val values = ContentValues(2)
-            values.put("start_time", trackSession.startTime.toString())
-            values.put("end_time", trackSession.endTime.toString())
-            val id = insert("tracks", null, values)
-            setTransactionSuccessful()
-            endTransaction()
-            return id
-        }
-    }
-
-    fun getLastTrackSessionId(): Long? {
-        val db = readableDatabase
-        val cursor = db.rawQuery("SELECT MAX(_id) AS last_id FROM tracks", null)
-        return cursor.use {
-            if (it.moveToNext()) {
-                it.getLong(it.getColumnIndexOrThrow("last_id"))
-            } else {
-                null
-            }
-        }
-    }
-
 }

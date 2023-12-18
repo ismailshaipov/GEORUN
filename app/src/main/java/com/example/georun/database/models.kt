@@ -12,5 +12,6 @@ data class Coordinates(
 data class TrackSession(
     val sessionId: Long = 0,
     val startTime: LocalDateTime = LocalDateTime.now(),
-    val endTime: LocalDateTime = LocalDateTime.now()
+    val endTime: LocalDateTime = LocalDateTime.now(),
+    val distance: String
 )

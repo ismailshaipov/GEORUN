@@ -1,4 +1,15 @@
 <resources>
-    <string name="app_name">GEORUN</string>
+    <string name="app_name" translatable="false">GEORUN</string>
     <string name="loc_permission_request">The application needs to track the location of the device. Allow access to geolocation? In case of failure, the application will not be able to continue working...</string>
+    <string name="SessionID">"Session ID: "</string>
+    <string name="StartTime">"Start Time: "</string>
+    <string name="EndTime">"End Time: "</string>
+    <string name="Distance">"Distance: "</string>
+    <string name="DeleteSession">Delete Session</string>
+    <string name="UnknownLocation">Unknown location</string>
+    <string name="Yes">Yes</string>
+    <string name="No">No</string>
+    <string name="StartTracking">Start Tracking</string>
+    <string name="StopTracking">Stop Tracking</string>
+    <string name="title_activity_map">MapActivity</string>
 </resources>
