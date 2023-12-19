@@ -108,7 +108,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
                 null,
                 null,
                 null,
-                null
+                "_id DESC"
             ).let {
                 while (it.moveToNext()) {
                     val sessionId = it.getLong(it.getColumnIndexOrThrow("_id"))
@@ -117,7 +117,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
 
                     // Проверка на null перед парсингом
                     if (startTimeString != null && endTimeString != null) {
-                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
 
                         val zone = ZoneId.systemDefault()
 
@@ -160,7 +160,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(
                 while (it.moveToNext()) {
                 val latitude = it.getDouble(it.getColumnIndexOrThrow("latitude"))
                 val longitude = it.getDouble(it.getColumnIndexOrThrow("longitude"))
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
                 val starttimestamp = it.getString(it.getColumnIndexOrThrow("timestamp"))
                 val timestamp = LocalDateTime.parse(starttimestamp, formatter)
                 coordinates.add(Coordinates(trackSessionId, latitude, longitude, timestamp))

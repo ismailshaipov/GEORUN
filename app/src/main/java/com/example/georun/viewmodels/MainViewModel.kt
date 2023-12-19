@@ -67,7 +67,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     )
                 }
                 val firstL = firstLoc.result
+                if(firstL != null){
                 databaseRepository.addCoordinatesToSession(sessionId, firstL)
+                }else{
+                    Log.d("ErrorFirst","Error StartLoc")
+                }
             }
 
             updJob = viewModelScope.launch {

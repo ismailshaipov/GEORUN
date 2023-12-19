@@ -46,6 +46,7 @@ import com.example.georun.database.DBHelper
 import com.example.georun.database.TrackSession
 import com.example.georun.ui.theme.GEORUNTheme
 import com.example.georun.viewmodels.MainViewModel
+import com.yandex.mapkit.MapKitFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -75,6 +76,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MapKitFactory.setApiKey("f4ddff1c-e7a7-422c-8b59-6b415d812cca")
+        MapKitFactory.initialize( this)
         setContent {
             GEORUNTheme {
                 MainUI(

@@ -37,8 +37,6 @@ class MapActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        MapKitFactory.setApiKey("f4ddff1c-e7a7-422c-8b59-6b415d812cca")
-        MapKitFactory.initialize( this)
 
         mvm = ViewModelProvider(this)[MainViewModel::class.java]
         sessionId = intent.getLongExtra("sessionID", -1)
@@ -59,13 +57,13 @@ class MapActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         MapKitFactory.getInstance().onStart()
-        MapKitFactory.initialize( this)
     }
 
     override fun onStop() {
         MapKitFactory.getInstance().onStop()
         super.onStop()
     }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,7 +107,7 @@ fun YaMap(
                 if(coordinates.size >= 2){
                     mapWindow.map.move(
                         CameraPosition(
-                            Point(coordinates.firstOrNull()?.latitude ?: 0.0, coordinates.firstOrNull()?.longitude ?: 0.0),
+                            Point(coordinates.firstOrNull()?.latitude ?:  41.303921, coordinates.firstOrNull()?.longitude ?:  -81.901693),
                             17.0f,
                             0.0f,
                             30.0f
